@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrdoVaccins</title>
+<meta name="description" content="Aide à la prescription des vaccins : ordonnances prêtes à copier selon l'âge et la situation, avec schémas et remboursement (calendrier vaccinal 2026).">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f0f2f5; --text:#1b1f24; --muted:#5b6470;
+  --border:#d9dde3; --accent:#1f6feb; --accent-soft:#e6efff;
+  --ok:#1a7f37; --ok-soft:#e3f4e8; --full:#0b6e6e; --full-soft:#dff3f1;
+  --nr:#b42318; --nr-soft:#fdeceb; --warn:#9a6700; --warn-soft:#fff4d6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --surface:#171b21; --surface-2:#1f242c; --text:#e6e9ee; --muted:#9aa3ae;
+    --border:#2c333d; --accent:#5b9bff; --accent-soft:#1a2a45;
+    --ok:#56d17a; --ok-soft:#173222; --full:#4fd1c5; --full-soft:#123230;
+    --nr:#ff7b72; --nr-soft:#3a1a1a; --warn:#e3b341; --warn-soft:#3a2f12;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --surface:#171b21; --surface-2:#1f242c; --text:#e6e9ee; --muted:#9aa3ae;
+  --border:#2c333d; --accent:#5b9bff; --accent-soft:#1a2a45;
+  --ok:#56d17a; --ok-soft:#173222; --full:#4fd1c5; --full-soft:#123230;
+  --nr:#ff7b72; --nr-soft:#3a1a1a; --warn:#e3b341; --warn-soft:#3a2f12;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--surface);border-bottom:1px solid var(--border)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:14px 0}
+.brand{font-weight:700;font-size:20px;letter-spacing:.2px}
+.brand small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.age{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.age label{font-size:13px;color:var(--muted)}
+.age input,.age select{font:inherit;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:78px}
+.age select{width:auto}
+button{font:inherit;cursor:pointer}
+.btn{padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.theme{padding:6px 10px}
+nav.groups{display:flex;gap:4px;flex-wrap:wrap;padding-bottom:10px}
+nav.groups button{border:1px solid transparent;background:none;color:var(--muted);padding:6px 12px;border-radius:999px}
+nav.groups button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+main{padding:18px 0 40px}
+.profiles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.profiles button{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.profiles button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}.sticky{position:static}}
+.opts label.sel{flex-wrap:wrap}.opts select{max-width:100%;min-width:0;flex:1 1 200px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card h2{margin:0 0 4px;font-size:18px}
+.card h3{margin:16px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.intro{color:var(--muted);margin:0 0 8px}
+.item{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:10px 0;border-top:1px solid var(--border)}
+.item:first-of-type{border-top:none}
+.item input{margin-top:4px;width:16px;height:16px;accent-color:var(--accent)}
+.item .name{font-weight:600}
+.item .schema{margin:2px 0}
+.item .note{font-size:13px;color:var(--muted)}
+.badges{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:6px;vertical-align:middle}
+.badge{font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.b65{background:var(--ok-soft);color:var(--ok)}
+.b100{background:var(--full-soft);color:var(--full)}
+.bnr{background:var(--nr-soft);color:var(--nr)}
+.bobl{background:var(--warn-soft);color:var(--warn)}
+.alert{background:var(--warn-soft);color:var(--text);border-left:3px solid var(--warn);padding:10px 12px;border-radius:6px;margin:10px 0;font-size:14px}
+.alert ul{margin:4px 0 0;padding-left:18px}
+.sticky{position:sticky;top:12px}
+textarea{width:100%;min-height:340px;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text);resize:vertical}
+.opts{display:flex;flex-direction:column;gap:6px;margin:10px 0;font-size:14px}
+.opts label{display:flex;gap:8px;align-items:flex-start}
+.opts select{font:inherit;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.copied{color:var(--ok);font-size:13px;min-height:1em}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:6px 0 14px}
+footer{border-top:1px solid var(--border);color:var(--muted);font-size:13px;padding:16px 0 30px}
+footer a{color:var(--accent)}
+input.title{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)}
+@media print{header,nav,.profiles,.opts,.row,footer,#left{display:none}.grid{display:block}textarea{border:none;min-height:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">OrdoVaccins<small>Ordonnances vaccinales prêtes à copier · calendrier vaccinal 2026</small></div>
+      <div class="age" role="group" aria-label="Âge du patient">
+        <label for="ageY">Âge</label>
+        <input id="ageY" type="number" min="0" max="120" placeholder="ans" aria-label="Années">
+        <input id="ageM" type="number" min="0" max="11" placeholder="mois" aria-label="Mois">
+        <button class="btn" id="goAge">Afficher</button>
+        <button class="btn theme" id="theme" title="Changer de thème" aria-label="Changer de thème">Thème</button>
+      </div>
+    </div>
+    <nav class="groups" id="groups" aria-label="Catégories"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="profiles" id="profiles"></div>
+  <div class="legend">
+    <span><span class="badge b65">65 %</span> remboursé à 65 % (reste : complémentaire)</span>
+    <span><span class="badge b100">100 %</span> pris en charge à 100 %</span>
+    <span><span class="badge bnr">NR</span> non remboursé dans cette indication</span>
+    <span><span class="badge bobl">Obligatoire</span> obligation vaccinale</span>
+  </div>
+  <div class="grid">
+    <section class="card" id="left" aria-live="polite"></section>
+    <section class="card sticky" aria-label="Ordonnance">
+      <h2>Ordonnance</h2>
+      <label class="intro" for="title">Titre</label>
+      <input id="title" class="title">
+      <div class="opts">
+        <label class="sel">Remboursement dans le texte :
+          <select id="rembMode">
+            <option value="full">mention complète (65 %, 100 %, NR)</option>
+            <option value="nr">mention « NR » uniquement</option>
+            <option value="none">aucune mention</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="fAdmin" checked> Administration possible par un médecin, une sage-femme, un pharmacien ou un infirmier (à partir de 11 ans)</label>
+        <label><input type="checkbox" id="fCarnet" checked> Merci d'apporter le carnet de santé (ou carnet de vaccination) le jour de l'injection</label>
+        <label><input type="checkbox" id="fNotes"> Inclure les remarques (délais, précautions)</label>
+      </div>
+      <textarea id="out" spellcheck="false" aria-label="Texte de l'ordonnance"></textarea>
+      <div class="row">
+        <button class="btn primary" id="copy">Copier l'ordonnance</button>
+        <button class="btn" id="all">Tout cocher</button>
+        <button class="btn" id="none">Tout décocher</button>
+        <button class="btn" id="print">Imprimer</button>
+        <span class="copied" id="copied"></span>
+      </div>
+      <p class="intro" style="margin-top:10px;font-size:13px">Le texte reste modifiable avant copie. Toute modification des cases régénère le texte.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Sources :</strong> Calendrier des vaccinations et recommandations vaccinales 2026 (ministère de la Santé, juillet 2026), avis HAS, <a href="https://www.mesvaccins.net/" target="_blank" rel="noopener">mesvaccins.net</a>, <a href="https://professionnels.vaccination-info-service.fr/" target="_blank" rel="noopener">vaccination-info-service.fr</a>, <a href="https://www.ameli.fr/assure/remboursements/rembourse/medicaments-vaccins-dispositifs-medicaux/vaccination" target="_blank" rel="noopener">ameli.fr</a>. Données de remboursement vérifiées le 22/11/2026.</p>
+    <p>Outil d'aide à la prescription : il ne remplace ni le calendrier vaccinal officiel ni le RCP des vaccins. Vérifier le statut vaccinal (carnet), les contre-indications et les mises à jour réglementaires avant toute prescription.</p>
+  </div>
+</footer>
+
+<script>
+/* Codes remboursement : "65", "100", "NR", ou texte libre via rl (libellé) */
+const GROUPS = [
+  {id:"nour", label:"Nourrisson (0-2 ans)"},
+  {id:"enf", label:"Enfant (2-10 ans)"},
+  {id:"ado", label:"Adolescent (11-17 ans)"},
+  {id:"adu", label:"Adulte"},
+  {id:"sen", label:"65 ans et plus"},
+  {id:"sit", label:"Situations particulières"}
+];
+
+const V = {
+  hexa:(n)=>({name:"Infanrix Hexa® ou Hexyon® ou Vaxelis®", desc:"vaccin hexavalent DTCaP-Hib-Hépatite B : "+n, r:"65", obl:true}),
+  pneumoNour:(n)=>({name:"Vaxneuvance® (ou Prevenar 13®)", desc:"vaccin pneumococcique conjugué : "+n, r:"65", obl:true,
+    note:"Calendrier 2026 : schéma 2, 4 et 11 mois. La HAS (juillet 2026) recommande Prevenar 20® en 4 doses (2, 4, 6 et 11 mois), mais Prevenar 20® n'est pas encore remboursé chez l'enfant (novembre 2026)."}),
+  rota:(n)=>({name:"Rotarix® (2 doses : 2 et 3 mois) ou RotaTeq® (3 doses : 2, 3 et 4 mois)", desc:"vaccin rotavirus, voie orale : "+n, r:"65",
+    note:"Garder le même vaccin pour tout le schéma. Schéma à terminer avant 24 semaines (Rotarix®) ou 32 semaines (RotaTeq®). Vaccin vivant : contre-indiqué si immunodépression (dont exposition in utero à un anticorps monoclonal immunosuppresseur)."}),
+  menB:(n)=>({name:"Bexsero®", desc:"vaccin méningocoque B : "+n, r:"65", obl:true,
+    note:"Fièvre fréquente : paracétamol préventif possible selon le RCP."}),
+  ror:(n)=>({name:"Priorix® ou M-M-RVaxPro®", desc:"vaccin rougeole-oreillons-rubéole : "+n, r:"100", rl:"100 % jusqu'à 17 ans", obl:true,
+    note:"Gratuité jusqu'à 17 ans révolus : prescrire sur une ordonnance isolée avec la mention « vaccin ROR gratuit »."})
+};
+
+const P = [
+/* ---------- NOURRISSON ---------- */
+{g:"nour", id:"m2", label:"2 mois", title:"Vaccinations de l'âge de 2 mois", intro:"Première visite vaccinale.", items:[
+  V.hexa("1re dose à 2 mois (schéma 2, 4 et 11 mois)"),
+  V.pneumoNour("1re dose à 2 mois (schéma 2, 4 et 11 mois)"),
+  V.rota("1re dose à 2 mois"),
+  {name:"BCG (si risque élevé de tuberculose)", desc:"1 dose intradermique, à partir de 1 mois", r:"65", def:false, note:"Non disponible en pharmacie : réalisé en PMI, CLAT ou centre de vaccination."}
+]},
+{g:"nour", id:"m3", label:"3 mois", title:"Vaccinations de l'âge de 3 mois", items:[
+  V.menB("1re dose à 3 mois (schéma 3, 5 et 12 mois)"),
+  {name:"Rotarix® ou RotaTeq®", desc:"vaccin rotavirus, voie orale : 2e dose", r:"65", note:"Dernière dose pour Rotarix®. RotaTeq® : 3e dose à 4 mois."}
+]},
+{g:"nour", id:"m4", label:"4 mois", title:"Vaccinations de l'âge de 4 mois", items:[
+  V.hexa("2e dose à 4 mois"),
+  V.pneumoNour("2e dose à 4 mois"),
+  {name:"RotaTeq®", desc:"vaccin rotavirus, voie orale : 3e dose (uniquement si RotaTeq®)", r:"65", def:false}
+]},
+{g:"nour", id:"m5", label:"5 mois", title:"Vaccinations de l'âge de 5 mois", items:[
+  V.menB("2e dose à 5 mois")
+]},
+{g:"nour", id:"m6", label:"6 mois", title:"Vaccinations de l'âge de 6 mois", items:[
+  {name:"Nimenrix®", desc:"vaccin méningocoques ACWY conjugué : 1re dose à 6 mois (rappel à 12 mois)", r:"65", obl:true},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière, si facteur de risque : 2 doses à 4 semaines d'intervalle la 1re année (avant 9 ans), puis 1 dose par an", r:"100", rl:"100 % si à risque", def:false}
+]},
+{g:"nour", id:"m11", label:"11 mois", title:"Vaccinations de l'âge de 11 mois", items:[
+  V.hexa("rappel à 11 mois"),
+  V.pneumoNour("rappel à 11 mois")
+]},
+{g:"nour", id:"m12", label:"12 mois", title:"Vaccinations de l'âge de 12 mois", items:[
+  V.menB("rappel à 12 mois"),
+  {name:"Nimenrix® ou MenQuadfi®", desc:"vaccin méningocoques ACWY conjugué : rappel à 12 mois", r:"65", obl:true},
+  V.ror("1re dose à 12 mois (2e dose entre 16 et 18 mois)")
+]},
+{g:"nour", id:"m16", label:"16-18 mois", title:"Vaccinations de l'âge de 16-18 mois", items:[
+  V.ror("2e dose entre 16 et 18 mois (au moins 1 mois après la 1re)")
+]},
+{g:"nour", id:"nourcomplet", label:"Schéma complet 0-2 ans", title:"Vaccinations du nourrisson (calendrier vaccinal 2026)", intro:"Ordonnance unique couvrant toute la première année et le début de la deuxième.", items:[
+  V.hexa("3 doses à 2, 4 et 11 mois"),
+  V.pneumoNour("3 doses à 2, 4 et 11 mois"),
+  V.rota("2 ou 3 doses selon le vaccin"),
+  V.menB("3 doses à 3, 5 et 12 mois"),
+  {name:"Nimenrix®", desc:"vaccin méningocoques ACWY : 1 dose à 6 mois, puis rappel à 12 mois (Nimenrix® ou MenQuadfi®)", r:"65", obl:true},
+  V.ror("2 doses : 12 mois et 16-18 mois")
+]},
+{g:"nour", id:"vrsnn", label:"VRS (bronchiolite)", title:"Prévention de la bronchiolite à VRS du nourrisson", intro:"Immunisation passive si la mère n'a pas reçu Abrysvo® au moins 14 jours avant l'accouchement.", items:[
+  {name:"Beyfortus® (nirsévimab) ou Enflonsia®", desc:"anticorps monoclonal : 1 injection IM pendant la période épidémique (Beyfortus® : 50 mg si < 5 kg, 100 mg si ≥ 5 kg)", r:"other", rl:"Pris en charge",
+   note:"Idéalement en maternité. Non indiqué si Abrysvo® administré à la mère au moins 14 jours avant la naissance (sauf situations particulières)."}
+]},
+
+/* ---------- ENFANT ---------- */
+{g:"enf", id:"ratt24", label:"Rattrapage 2-4 ans", title:"Rattrapage méningocoques (enfant de 2 à 4 ans révolus)", intro:"Rattrapage transitoire jusqu'au 5e anniversaire, y compris chez les enfants déjà vaccinés contre le méningocoque C. Obligatoire pour les enfants nés depuis le 1er janvier 2023 non vaccinés selon le calendrier.", items:[
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"vaccin méningocoques ACWY : 1 dose unique", r:"65", rl:"65 % (enfants nés 2020-2024)"},
+  {name:"Bexsero®", desc:"vaccin méningocoque B : 2 doses espacées d'au moins 1 mois", r:"65", rl:"65 % (enfants nés 2020-2024)"}
+]},
+{g:"enf", id:"a6", label:"6 ans", title:"Rappel de l'âge de 6 ans", items:[
+  {name:"Tetravac-acellulaire®", desc:"vaccin DTCaP (diphtérie, tétanos, coqueluche, poliomyélite) : 1 dose de rappel à 6 ans", r:"65"},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière (proposée de 2 à 17 ans) : avant 9 ans, 2 doses à 4 semaines d'intervalle si jamais vacciné, puis 1 dose par an", r:"65", rl:"65 % sans comorbidité, 100 % si à risque", def:false}
+]},
+{g:"enf", id:"enf210", label:"Rattrapage 2-10 ans", title:"Mise à jour des vaccinations (enfant de 2 à 10 ans)", intro:"Compléter selon le carnet ; ne pas recommencer un schéma interrompu.", items:[
+  V.ror("2 doses au total, espacées d'au moins 1 mois"),
+  {name:"Engerix B 10 µg®", desc:"hépatite B (si non vacciné) : 3 doses M0, M1, M6", r:"65", def:false},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY entre 5 et 10 ans : 1 dose", r:"NR", def:false, note:"Possible selon l'AMM mais hors recommandation générale entre 5 et 10 ans : non remboursé (sauf facteur de risque)."},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : avant 9 ans, 2 doses à 4 semaines d'intervalle si jamais vacciné, puis 1 dose par an", r:"65", rl:"65 % sans comorbidité, 100 % si à risque", def:false}
+]},
+
+/* ---------- ADOLESCENT ---------- */
+{g:"ado", id:"a1114", label:"11-14 ans", title:"Vaccinations de l'adolescent de 11 à 14 ans", items:[
+  {name:"Repevax® ou Boostrixtetra®", desc:"vaccin dTcaP : 1 dose de rappel entre 11 et 13 ans", r:"65"},
+  {name:"Gardasil 9®", desc:"papillomavirus, filles et garçons : 2 doses espacées de 6 mois (intervalle de 5 à 13 mois)", r:"65", note:"Gratuit (100 %) dans le cadre de la campagne en classe de 5e."},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY : 1 dose unique, quelle que soit la vaccination antérieure contre le méningocoque C", r:"65"},
+  {name:"Engerix B 20 µg®", desc:"hépatite B (rattrapage si non vacciné, jusqu'à 15 ans inclus) : 2 doses M0 et M6 (schéma 2 doses de 11 à 15 ans) ; ou Engerix B 10 µg® : 3 doses M0, M1, M6", r:"65", def:false},
+  V.ror("rattrapage si moins de 2 doses : compléter à 2 doses espacées d'au moins 1 mois"),
+  {name:"Varilrix® ou Varivax®", desc:"varicelle, à partir de 12 ans si pas d'antécédent (sérologie possible) : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®)", r:"65", def:false, note:"Vaccin vivant. Contre-indiqué pendant la grossesse ; éviter une grossesse dans le mois suivant."},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose par an", r:"65", rl:"65 % sans comorbidité, 100 % si à risque", def:false}
+]},
+{g:"ado", id:"a1517", label:"15-17 ans", title:"Rattrapage vaccinal de l'adolescent de 15 à 17 ans", items:[
+  {name:"Gardasil 9®", desc:"papillomavirus, rattrapage : 3 doses M0, M2, M6", r:"65", note:"2 doses seulement si la vaccination a été débutée entre 11 et 14 ans."},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY (rattrapage si aucune dose reçue après 11 ans) : 1 dose unique", r:"65"},
+  {name:"Bexsero®", desc:"méningocoque B (peut être proposé de 15 à 24 ans) : 2 doses espacées d'au moins 1 mois", r:"65"},
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : 1 dose si le rappel de 11-13 ans n'a pas été fait", r:"65", def:false},
+  {name:"Engerix B 10 µg®", desc:"hépatite B (rattrapage jusqu'à 15 ans inclus) : 3 doses M0, M1, M6 ; à partir de 16 ans uniquement si exposition au risque (Engerix B 20 µg®)", r:"65", def:false},
+  V.ror("rattrapage si moins de 2 doses : 2 doses au total espacées d'au moins 1 mois"),
+  {name:"Varilrix® ou Varivax®", desc:"varicelle si pas d'antécédent (sérologie possible) : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®)", r:"65", def:false, note:"Vaccin vivant. Contre-indiqué pendant la grossesse ; éviter une grossesse dans le mois suivant."},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose par an", r:"65", rl:"65 % sans comorbidité, 100 % si à risque", def:false}
+]},
+
+/* ---------- ADULTE ---------- */
+{g:"adu", id:"a1826", label:"18-26 ans", title:"Vaccinations et rattrapage du jeune adulte (18-26 ans)", items:[
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : rappel à 25 ans (rattrapage coqueluche possible jusqu'à 39 ans révolus)", r:"65"},
+  {name:"Gardasil 9®", desc:"papillomavirus, rattrapage jusqu'à 26 ans révolus : 3 doses M0, M2, M6", r:"65"},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY (rattrapage jusqu'à 24 ans révolus) : 1 dose unique", r:"65"},
+  {name:"Bexsero®", desc:"méningocoque B (peut être proposé jusqu'à 24 ans révolus) : 2 doses espacées d'au moins 1 mois", r:"65", def:false},
+  {name:"Priorix® ou M-M-RVaxPro®", desc:"ROR (personnes nées depuis 1980) : 2 doses au total, espacées d'au moins 1 mois", r:"65", def:false, note:"Vaccin vivant. Contre-indiqué pendant la grossesse ; éviter une grossesse dans le mois suivant."},
+  {name:"Varilrix® ou Varivax®", desc:"varicelle (jusqu'à 18 ans, ou femme en âge de procréer sans antécédent, sérologie négative) : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®)", r:"65", def:false, note:"Vaccin vivant. Contre-indiqué pendant la grossesse ; éviter une grossesse dans le mois suivant."}
+]},
+{g:"adu", id:"a2764", label:"27-64 ans", title:"Vaccinations de l'adulte (27-64 ans)", items:[
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : rappel à 45 ans (puis 65 ans)", r:"65", note:"Rappel coqueluche (dTcaP) recommandé dans l'entourage d'un futur nourrisson (cocooning) si dernier rappel coqueluche datant de plus de 10 ans."},
+  {name:"Priorix® ou M-M-RVaxPro®", desc:"ROR (personnes nées depuis 1980) : 2 doses au total, espacées d'au moins 1 mois", r:"65", def:false},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière (maladie chronique, IMC ≥ 40, entourage de personnes à risque) : 1 dose par an", r:"100", rl:"100 % si à risque, NR sinon", def:false},
+  {name:"Comirnaty® (ou vaccin adapté disponible)", desc:"Covid-19, personnes à risque : 1 dose à l'automne", r:"100", def:false},
+  {name:"Capvaxive® ou Prevenar 20®", desc:"pneumocoque, adulte à risque (immunodépression, maladie chronique cardiaque, respiratoire, hépatique, rénale, diabète, brèche ostéoméningée, implant cochléaire) : 1 dose unique", r:"65", def:false, note:"HAS juillet 2026 : Capvaxive® (VPC21) recommandé préférentiellement."},
+  {name:"Shingrix®", desc:"zona, adulte immunodéprimé à partir de 18 ans : 2 doses espacées de 2 mois (M0, M2)", r:"65", def:false},
+  {name:"Engerix B 20 µg®", desc:"hépatite B (exposition au risque) : 3 doses M0, M1, M6", r:"65", def:false},
+  {name:"Avaxim 160® ou Havrix 1440®", desc:"hépatite A (voyage) : 1 dose, rappel 6 à 12 mois plus tard", r:"NR", def:false, note:"Remboursé à 65 % uniquement chez certains patients à risque (ex. hépatopathie chronique)."}
+]},
+
+/* ---------- 65 ANS ET PLUS ---------- */
+{g:"sen", id:"s65", label:"65 ans et plus", title:"Vaccinations recommandées à partir de 65 ans", items:[
+  {name:"Efluelda® ou Fluad®", desc:"grippe saisonnière : 1 dose par an (vaccins à dose renforcée ou avec adjuvant à privilégier ; vaccins standards possibles)", r:"100", rl:"100 % (bon de prise en charge)"},
+  {name:"Comirnaty® (ou vaccin adapté disponible)", desc:"Covid-19 : 1 dose à l'automne ; dose supplémentaire au printemps à partir de 80 ans, en EHPAD/USLD ou si immunodépression", r:"100"},
+  {name:"Capvaxive® ou Prevenar 20®", desc:"pneumocoque : 1 dose unique", r:"65", note:"HAS juillet 2026 : Capvaxive® (VPC21) recommandé préférentiellement. Pas de rappel établi."},
+  {name:"Shingrix®", desc:"zona : 2 doses espacées de 2 mois (M0, M2 ; 2e dose possible jusqu'à 6 mois)", r:"65", note:"Si antécédent de zona ou de vaccination Zostavax® : délai d'au moins 1 an avant la 1re dose."},
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : rappel à 65 ans, puis tous les 10 ans (75, 85 ans...)", r:"65"},
+  {name:"Arexvy® ou Abrysvo® ou mResvia®", desc:"VRS : 1 dose (à partir de 75 ans, ou dès 65 ans si BPCO, pathologie respiratoire chronique ou insuffisance cardiaque)", r:"NR", def:false, note:"Recommandé mais non remboursé dans cette indication au 22/11/2026 (avis favorable de la HAS en juin 2026, en attente d'inscription)."}
+]},
+
+/* ---------- SITUATIONS PARTICULIÈRES ---------- */
+{g:"sit", id:"gross", label:"Grossesse", title:"Vaccinations pendant la grossesse", items:[
+  {name:"Repevax® ou Boostrixtetra®", desc:"coqueluche (dTcaP) : 1 dose à chaque grossesse, à partir de 20 SA", r:"65", rl:"65 % (100 % à partir du 6e mois)", note:"Respecter au moins 2 semaines entre dTcaP et Abrysvo®."},
+  {name:"Abrysvo®", desc:"VRS : 1 dose entre 32 et 36 SA, pendant la saison VRS (septembre à janvier)", r:"100", rl:"100 % (assurance maternité)", note:"Si accouchement moins de 14 jours après l'injection : immunisation du nouveau-né par anticorps monoclonal. Grossesse ultérieure : privilégier l'anticorps monoclonal chez le nouveau-né."},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose pendant la campagne, quel que soit le trimestre", r:"100"},
+  {name:"Comirnaty® (vaccin ARNm)", desc:"Covid-19 : 1 dose pendant la campagne, quel que soit le trimestre", r:"100"}
+]},
+{g:"sit", id:"isadu", label:"Avant immunosuppresseur (adulte)", title:"Mise à jour du calendrier vaccinal avant début d'un traitement immunosuppresseur", intro:"Idéalement avant l'initiation du traitement. Vérifier sérologies VZV, VHB (Ag HBs, Ac anti-HBs, Ac anti-HBc) et statut ROR.", items:[
+  {name:"Priorix® ou M-M-RVaxPro®", desc:"ROR (personnes nées depuis 1980, si moins de 2 doses) : compléter à 2 doses espacées d'au moins 1 mois, au moins 4 semaines avant le début de l'immunosuppresseur", r:"65", def:false, note:"Vaccin vivant : contre-indiqué une fois l'immunosuppression débutée."},
+  {name:"Varilrix® ou Varivax®", desc:"varicelle si sérologie VZV négative : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®), à terminer au moins 4 semaines avant le début de l'immunosuppresseur", r:"65", def:false, note:"Vaccin vivant : contre-indiqué une fois l'immunosuppression débutée."},
+  {name:"Capvaxive® ou Prevenar 20®", desc:"pneumocoque : 1 dose unique", r:"65"},
+  {name:"Shingrix®", desc:"zona, à partir de 18 ans : 2 doses espacées de 2 mois (intervalle réductible à 1 mois), schéma idéalement terminé 14 jours avant le début du traitement", r:"65"},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose par an", r:"100"},
+  {name:"Comirnaty® (ou vaccin adapté disponible)", desc:"Covid-19 : 1 dose à l'automne et 1 dose au printemps (immunodéprimé)", r:"100"},
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : 1 rappel si dernier rappel ancien, puis tous les 10 ans", r:"65"},
+  {name:"Gardasil 9®", desc:"papillomavirus, jusqu'à 26 ans révolus : 3 doses M0, M2, M6", r:"65", def:false, note:"Chez l'immunodéprimé, schéma à 3 doses même avant 15 ans."},
+  {name:"Engerix B 20 µg®", desc:"hépatite B si non immunisé : 3 doses M0, M1, M6 ; contrôle des Ac anti-HBs 1 à 2 mois après la dernière dose", r:"65", def:false},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY : 1 dose (rappel tous les 5 ans si risque persistant)", r:"65", rl:"65 % si indication", def:false, note:"Indiqué en cas d'asplénie, de déficit en complément ou properdine, de traitement anti-complément (éculizumab, ravulizumab...) ou de greffe de CSH ; sinon selon le calendrier (11-24 ans)."},
+  {name:"Bexsero®", desc:"méningocoque B : 2 doses espacées d'au moins 1 mois", r:"65", rl:"65 % si indication", def:false, note:"Mêmes indications que le vaccin ACWY (asplénie, déficit en complément, anti-complément, greffe de CSH) ou 15-24 ans."}
+]},
+{g:"sit", id:"isenf", label:"Avant immunosuppresseur (enfant)", title:"Mise à jour du calendrier vaccinal de l'enfant avant traitement immunosuppresseur", intro:"Compléter d'abord le calendrier de l'âge. Vaccins vivants au moins 4 semaines avant le début du traitement.", items:[
+  V.ror("compléter à 2 doses (au moins 1 mois d'intervalle), au moins 4 semaines avant l'immunosuppresseur"),
+  {name:"Varilrix® ou Varivax®", desc:"varicelle si sérologie VZV négative, à partir de 12 mois : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®), à terminer au moins 4 semaines avant l'immunosuppresseur", r:"65"},
+  {name:"Vaxneuvance® puis Pneumovax®", desc:"pneumocoque (2 à 17 ans) : Vaxneuvance® 1 dose (2 doses à 2 mois d'intervalle si 2-4 ans non vacciné), puis Pneumovax® 1 dose au moins 8 semaines après", r:"65", note:"HAS novembre 2026 : 1 dose de Capvaxive® après schéma complet chez l'enfant immunodéprimé ou asplénique, mais non remboursé chez l'enfant à ce jour."},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière dès 6 mois : 2 doses à 4 semaines d'intervalle la 1re année (avant 9 ans), puis 1 dose par an", r:"100"},
+  {name:"Gardasil 9®", desc:"papillomavirus dès 9 ans : 3 doses M0, M2, M6", r:"65", rl:"65 % de 11 à 26 ans", def:false},
+  {name:"Engerix B 10 µg®", desc:"hépatite B (jusqu'à 15 ans inclus) : 3 doses M0, M1, M6 ; Engerix B 20 µg® à partir de 16 ans", r:"65", def:false},
+  {name:"Comirnaty® (ou vaccin adapté disponible)", desc:"Covid-19 : selon l'âge et le risque", r:"100", def:false}
+]},
+{g:"sit", id:"asplenie", label:"Asplénie", title:"Vaccinations en cas d'asplénie ou d'hyposplénisme (adulte)", intro:"Idéalement au moins 2 semaines avant une splénectomie programmée, sinon à partir de 2 semaines après.", items:[
+  {name:"Capvaxive® ou Prevenar 20®", desc:"pneumocoque : 1 dose unique", r:"65"},
+  {name:"Nimenrix® ou MenQuadfi® ou Menveo®", desc:"méningocoques ACWY : 1 dose, rappel tous les 5 ans", r:"65"},
+  {name:"Bexsero®", desc:"méningocoque B : 2 doses espacées d'au moins 1 mois", r:"65"},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose par an", r:"100"},
+  {name:"Repevax® ou Boostrixtetra®", desc:"dTcaP : mise à jour des rappels", r:"65", def:false}
+]},
+{g:"sit", id:"cocoon", label:"Entourage (cocooning)", title:"Vaccinations de l'entourage d'un nourrisson ou d'une personne immunodéprimée", items:[
+  {name:"Repevax® ou Boostrixtetra®", desc:"coqueluche (dTcaP) : 1 dose si dernier rappel coqueluche datant de plus de 10 ans", r:"65"},
+  {name:"Priorix® ou M-M-RVaxPro®", desc:"ROR (personnes nées depuis 1980) : 2 doses au total, espacées d'au moins 1 mois", r:"65", def:false},
+  {name:"Varilrix® ou Varivax®", desc:"varicelle si pas d'antécédent et sérologie négative : 2 doses espacées de 6 à 10 semaines (Varilrix®) ou de 4 à 8 semaines (Varivax®)", r:"65", def:false},
+  {name:"Vaxigrip® ou Influvac® ou Flucelvax®", desc:"grippe saisonnière : 1 dose par an", r:"100", rl:"100 % (entourage de nourrisson à risque de moins de 6 mois ou d'immunodéprimé)"},
+  {name:"Comirnaty® (ou vaccin adapté disponible)", desc:"Covid-19 : 1 dose à l'automne", r:"100", def:false}
+]}
+];
+
+/* ---------- LOGIQUE ---------- */
+const $ = s => document.querySelector(s);
+let cur = null;
+const state = {}; // profil id -> tableau de booléens
+
+function badgeHTML(it){
+  let h = "";
+  if(it.obl) h += '<span class="badge bobl">Obligatoire</span>';
+  const lab = it.rl || ({"65":"65 %","100":"100 %","NR":"NR"}[it.r] || "Remboursé");
+  const cls = it.r==="NR" ? "bnr" : it.r==="100" ? "b100" : "b65";
+  h += '<span class="badge '+cls+'">'+esc(lab)+'</span>';
+  return '<span class="badges">'+h+'</span>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function renderGroups(){
+  const nav = $("#groups"); nav.innerHTML = "";
+  GROUPS.forEach(g=>{
+    const b = document.createElement("button");
+    b.textContent = g.label;
+    b.setAttribute("aria-pressed", cur && cur.g===g.id ? "true":"false");
+    b.onclick = ()=>select(P.find(p=>p.g===g.id).id);
+    nav.appendChild(b);
+  });
+}
+function renderProfiles(){
+  const box = $("#profiles"); box.innerHTML = "";
+  P.filter(p=>p.g===cur.g).forEach(p=>{
+    const b = document.createElement("button");
+    b.textContent = p.label;
+    b.setAttribute("aria-pressed", p.id===cur.id ? "true":"false");
+    b.onclick = ()=>select(p.id);
+    box.appendChild(b);
+  });
+}
+function renderLeft(){
+  const L = $("#left");
+  const st = state[cur.id];
+  let h = '<h2>'+esc(cur.title)+'</h2>';
+  if(cur.intro) h += '<p class="intro">'+esc(cur.intro)+'</p>';
+  h += '<h3>Vaccins proposés</h3>';
+  cur.items.forEach((it,i)=>{
+    h += '<label class="item"><input type="checkbox" data-i="'+i+'"'+(st[i]?" checked":"")+'>'+
+      '<span><span class="name">'+esc(it.name)+'</span>'+badgeHTML(it)+
+      '<div class="schema">'+esc(cap(it.desc))+'</div>'+
+      (it.note?'<div class="note">'+esc(it.note)+'</div>':'')+'</span></label>';
+  });
+  h += '<div class="alert"><strong>Rappels</strong><ul>'+
+    '<li>Vaccins vivants (ROR, varicelle, rotavirus, BCG, fièvre jaune) : contre-indiqués en cas d\'immunodépression et pendant la grossesse ; deux vaccins vivants injectables le même jour ou à 4 semaines d\'intervalle.</li>'+
+    '<li>Un schéma interrompu ne se recommence pas : compléter les doses manquantes.</li>'+
+    '<li>Mentionner « NR » à côté de tout vaccin prescrit hors indication remboursable.</li></ul></div>';
+  L.innerHTML = h;
+  L.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+    cb.onchange = ()=>{ st[+cb.dataset.i] = cb.checked; build(); };
+  });
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+function rembText(it, mode){
+  if(mode==="none") return "";
+  if(it.r==="NR") return " (NR)";
+  if(mode==="nr") return "";
+  const lab = it.rl || ({"65":"remboursé 65 %","100":"pris en charge 100 %"}[it.r] || "pris en charge");
+  return " ("+ (it.rl ? "remboursement : "+lab : lab) +")";
+}
+
+function build(){
+  const st = state[cur.id];
+  const mode = $("#rembMode").value;
+  const lines = [];
+  lines.push($("#title").value.trim());
+  lines.push("");
+  let notes = [];
+  cur.items.forEach((it,i)=>{
+    if(!st[i]) return;
+    lines.push("* "+it.name+" : "+it.desc+rembText(it,mode));
+    if($("#fNotes").checked && it.note) lines.push("    "+it.note);
+  });
+  lines.push("");
+  if($("#fAdmin").checked) lines.push("Administration des vaccins possible par un médecin, une sage-femme, un pharmacien ou un infirmier (à partir de 11 ans pour le pharmacien et l'infirmier).");
+  if($("#fCarnet").checked) lines.push("Merci d'apporter le carnet de santé (ou carnet de vaccination) le jour de l'injection.");
+  $("#out").value = lines.join("\n").replace(/\n{3,}/g,"\n\n").trim()+"\n";
+}
+
+function select(id){
+  cur = P.find(p=>p.id===id);
+  if(!state[id]) state[id] = cur.items.map(it=>it.def!==false);
+  $("#title").value = cur.title + " :";
+  renderGroups(); renderProfiles(); renderLeft(); build();
+  try{ localStorage.setItem("ordovaccins.profile", id); }catch(e){}
+}
+
+function profileForAge(y, m){
+  const months = y*12 + m;
+  if(months < 2) return "vrsnn";
+  if(months < 3) return "m2";
+  if(months < 4) return "m3";
+  if(months < 5) return "m4";
+  if(months < 6) return "m5";
+  if(months < 11) return "m6";
+  if(months < 12) return "m11";
+  if(months < 16) return "m12";
+  if(months < 24) return "m16";
+  if(y < 5) return "ratt24";
+  if(y < 7) return "a6";
+  if(y < 11) return "enf210";
+  if(y < 15) return "a1114";
+  if(y < 18) return "a1517";
+  if(y < 27) return "a1826";
+  if(y < 65) return "a2764";
+  return "s65";
+}
+
+$("#goAge").onclick = ()=>{
+  const y = Math.max(0, parseInt($("#ageY").value||"0",10));
+  const m = Math.min(11, Math.max(0, parseInt($("#ageM").value||"0",10)));
+  select(profileForAge(y,m));
+};
+["#ageY","#ageM"].forEach(s=>$(s).addEventListener("keydown",e=>{ if(e.key==="Enter") $("#goAge").click(); }));
+["#rembMode","#fAdmin","#fCarnet","#fNotes"].forEach(s=>$(s).addEventListener("change",build));
+$("#title").addEventListener("input",build);
+$("#all").onclick = ()=>{ state[cur.id] = cur.items.map(()=>true); renderLeft(); build(); };
+$("#none").onclick = ()=>{ state[cur.id] = cur.items.map(()=>false); renderLeft(); build(); };
+$("#print").onclick = ()=>window.print();
+$("#copy").onclick = async ()=>{
+  const t = $("#out").value;
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ $("#out").select(); document.execCommand("copy"); }
+  $("#copied").textContent = "Copié.";
+  setTimeout(()=>$("#copied").textContent="",1800);
+};
+$("#theme").onclick = ()=>{
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+  try{ localStorage.setItem("ordovaccins.theme", r.dataset.theme); }catch(e){}
+};
+try{ const t = localStorage.getItem("ordovaccins.theme"); if(t) document.documentElement.dataset.theme = t; }catch(e){}
+let start = "m2";
+try{ const s = localStorage.getItem("ordovaccins.profile"); if(s && P.some(p=>p.id===s)) start = s; }catch(e){}
+select(start);
+</script>
+</body>
+</html>
